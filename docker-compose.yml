@@ -2,6 +2,7 @@ version: '2'
 services:
   caching-proxy:
     image: s3-proxy-cache
+    container_name: s3-proxy-cache
     build:
       context: ./
       dockerfile: Dockerfile
