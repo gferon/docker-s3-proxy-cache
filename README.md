@@ -1,33 +1,38 @@
 # docker-s3-proxy-cache
 
-This is a proof of concept HTTP caching proxy for interactions between Amazon SDKs and Amazon S3. It uses Nginx as the HTTP caching proxy and a slight fork of [ngx_aws_auth](https://github.com/anomalizer/ngx_aws_auth/compare/AuthV2...hectcastro:hmc/remove-date-string-to-sign) for Amazon S3 authenticated requests.
+[![Docker Repository on Quay.io](https://quay.io/repository/azavea/s3-proxy-cache/status "Docker Repository on Quay.io")](https://quay.io/repository/azavea/s3-proxy-cache)
+[![Apache V2 License](http://img.shields.io/badge/license-Apache%20V2-blue.svg)](https://github.com/azavea/docker-s3-proxy-cache/blob/develop/LICENSE)
+
+A proof of concept HTTP caching proxy for requests against Amazon S3 using the [AWS Signature v4](http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html). The proxy itself is powered by [OpenResty/Nginx](https://openresty.org/) and two Lua modules produced by the [Adobe API Platform](https://github.com/adobe-apiplatform) team for HMAC and generating a valid AWS signature:
+
+- https://github.com/adobe-apiplatform/api-gateway-aws
+- https://github.com/adobe-apiplatform/api-gateway-hmac
 
 ## Usage
 
-First, populate the Nginx `server` configuration with the Amazon S3 bucket you're targeting:
-
-```nginx
-chop_prefix /<BUCKET>;
-```
-
-As well as your Amazon Web Services (AWS) credentials:
-
-```nginx
-aws_access_key <ACCESS_KEY>;
-aws_secret_key <SECRET_KEY>;
-s3_bucket <BUCKET>;
-```
-
-Lastly, use the supplied [Docker Compose](https://docs.docker.com/compose/) configuration to launch an instance of the caching proxy on port `8000`:
+First, build the container:
 
 ```bash
-$ docker-compose up
+$ docker build -t quay.io/azavea/s3-proxy-cache:latest .
+```
+
+Then, run the container with an Amazon S3 region reference and credentials:
+
+```bash
+$ docker run --rm \
+    -p 8000:80 \
+    -e AWS_DEFAULT_REGION="us-east-1" \
+    -e AWS_ACCESS_KEY_ID="AKI..." \
+    -e AWS_SECRET_ACCESS_KEY="w9G..." \
+    -v /var/cache/nginx:/var/cache/nginx \
+    quay.io/azavea/s3-proxy-cache:latest
 ```
 
 ## Test
 
-A quick way to test the setup above is with the AWS CLI. Below is an example of overriding the endpoint URL to make use of the caching proxy:
+A quick way to test the setup above is with the AWS CLI. Below is an example of how to enable AWS Signature v4 for the `default` profile and overriding the AWS CLI endpoint URL to target the caching proxy:
 
 ```bash
+$ aws configure set default.s3.signature_version s3v4
 $ aws --endpoint-url http://localhost:8000 s3 cp s3://<BUCKET>/<OBJECT> .
 ```

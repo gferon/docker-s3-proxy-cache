@@ -1,0 +1,24 @@
+sudo: required
+
+language: bash
+
+services:
+  - docker
+
+install:
+  - docker build -t quay.io/azavea/s3-proxy-cache:${TRAVIS_COMMIT:0:7} .
+
+script:
+  - docker run --rm quay.io/azavea/s3-proxy-cache:${TRAVIS_COMMIT:0:7} -v
+
+after_success:
+  - docker login -e . -p "${QUAY_PASSWORD}" -u "${QUAY_USER}" quay.io
+  - if [ "${TRAVIS_BRANCH}" == "feature/hmc/travis-ci" ]; then
+    docker push quay.io/azavea/s3-proxy-cache:${TRAVIS_COMMIT:0:7};
+    docker tag quay.io/azavea/s3-proxy-cache:${TRAVIS_COMMIT:0:7} quay.io/azavea/s3-proxy-cache:latest;
+    docker push quay.io/azavea/s3-proxy-cache:latest;
+    fi
+  - if [ -n "${TRAVIS_TAG}" ]; then
+    docker tag quay.io/azavea/s3-proxy-cache:${TRAVIS_COMMIT:0:7} quay.io/azavea/s3-proxy-cache:${TRAVIS_TAG};
+    docker push quay.io/azavea/s3-proxy-cache:${TRAVIS_TAG};
+    fi
