@@ -28,6 +28,19 @@ $ docker run --rm \
     quay.io/azavea/s3-proxy-cache:latest
 ```
 
+You can also optionally specify a bucket to always proxy requests to:
+
+```bash
+$ docker run --rm \
+    -p 8000:80 \
+    -e AWS_DEFAULT_REGION="us-east-1" \
+    -e AWS_ACCESS_KEY_ID="AKI..." \
+    -e AWS_SECRET_ACCESS_KEY="w9G..." \
+    -e AWS_S3_BUCKET="mybucket" \
+    -v /var/cache/nginx:/var/cache/nginx \
+    quay.io/azavea/s3-proxy-cache:latest
+```
+
 ## Test
 
 A quick way to test the setup above is with the AWS CLI. Below is an example of how to enable AWS Signature v4 for the `default` profile and overriding the AWS CLI endpoint URL to target the caching proxy:
